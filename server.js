@@ -22,13 +22,13 @@ function getNextIdFromCollection(collection) {
 }
 
 app.get("/", (req, res) => {
-  res.send("Welcome to the Book Tracker API!");
+  res.send("Welcome to the Book Library API!");
 });
 
 // Get all the books
 app.get("/books", async (req, res) => {
   try {
-    const allBooks = await query("SELECT * FROM book_applications");
+    const allBooks = await query("SELECT * FROM books");
     res.json(allBooks.rows);
   } catch (error) {
     console.error(error);
@@ -41,9 +41,7 @@ app.get("/books/:id", async (req, res) => {
   const bookId = parseInt(req.params.id, 10);
 
   try {
-    const book = await query("SELECT * FROM book_applications WHERE id = $1", [
-      bookId,
-    ]);
+    const book = await query("SELECT * FROM books WHERE id = $1", [bookId]);
     const foundBook = book.rows[0];
     if (foundBook) {
       res.json(foundBook);
@@ -58,39 +56,15 @@ app.get("/books/:id", async (req, res) => {
 
 // Create a new book
 app.post("/books", async (req, res) => {
-  const {
-    company,
-    title,
-    minSalary,
-    maxSalary,
-    location,
-    postDate,
-    bookPostUrl,
-    applicationDate,
-    lastContactDate,
-    companyContact,
-    status,
-  } = req.body;
+  const { title, author, genre, language, publicationDate, pages } = req.body;
 
   try {
     const newBook = await query(
-      `INSERT INTO book_applications 
-      (company, title, minSalary, maxSalary, location, postDate, bookPostUrl, applicationDate, lastContactDate, companyContact, status) 
+      `INSERT INTO books 
+      (title, author, genre, quantity, publicationDate, pages) 
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *`,
-      [
-        company,
-        title,
-        minSalary,
-        maxSalary,
-        location,
-        postDate,
-        bookPostUrl,
-        applicationDate,
-        lastContactDate,
-        companyContact,
-        status,
-      ]
+      [title, author, genre, language, publicationDate, pages]
     );
     console.log(newBook);
     res.status(201).json(newBook.rows[0]);
@@ -103,39 +77,15 @@ app.post("/books", async (req, res) => {
 // Update a specific book
 app.patch("/books/:id", async (req, res) => {
   const bookId = parseInt(req.params.id, 10);
-  const {
-    company,
-    title,
-    minSalary,
-    maxSalary,
-    location,
-    postDate,
-    bookPostUrl,
-    applicationDate,
-    lastContactDate,
-    companyContact,
-    status,
-  } = req.body;
+  const { title, author, genre, language, publicationDate, pages } = req.body;
 
   try {
     const updatedBook = await query(
-      `UPDATE book_applications 
-      SET company = $1, title = $2, minSalary = $3, maxSalary = $4, location = $5, postDate = $6, bookPostUrl = $7, applicationDate = $8, lastContactDate = $9, companyContact = $10, status = $11 
-      WHERE id = $12
+      `UPDATE books 
+      SET title = $1, author = $2, minSgenrealary = $3, language = $4, publicationDate = $5, pages = $6 
+      WHERE id = $7
       RETURNING *`,
-      [
-        company,
-        title,
-        minSalary,
-        maxSalary,
-        location,
-        postDate,
-        bookPostUrl,
-        applicationDate,
-        lastContactDate,
-        companyContact,
-        status,
-      ]
+      [title, author, genre, language, publicationDate, pages]
     );
     const foundBook = updatedBook.rows[0];
     if (foundBook) {
@@ -154,10 +104,7 @@ app.delete("/books/:id", async (req, res) => {
   const bookId = parseInt(req.params.id, 10);
 
   try {
-    const deleteBook = await query(
-      "DELETE FROM book_applications WHERE id = $1",
-      [bookId]
-    );
+    const deleteBook = await query("DELETE FROM books WHERE id = $1", [bookId]);
     if (deleteBook.rowCount > 0) {
       res.json({ message: "Book deleted successfully" });
     } else {
